@@ -291,20 +291,3 @@ footer {
 .github-link a:hover {
     text-decoration: underline;
 }
-
-.response-type-options {
-    margin: 10px 0;
-}
-
-.radio-option {
-    margin-bottom: 8px;
-}
-
-.radio-option input[type="radio"] {
-    margin-right: 8px;
-}
-
-.radio-option label {
-    display: inline;
-    font-weight: normal;
-}

@@ -4,8 +4,7 @@ const STORAGE_KEY = 'spotify_token_generator_config';
 let appConfig = {
     clientId: '',
     redirectUri: window.location.href.split('#')[0], // Current URL without hash
-    scopes: [],
-    responseType: 'token' // Default to token for backward compatibility
+    scopes: []
 };
 
 // Available Spotify scopes with descriptions
@@ -47,8 +46,6 @@ const availableScopes = {
 const elements = {
     clientIdInput: document.getElementById('client-id'),
     redirectUriInput: document.getElementById('redirect-uri'),
-    responseTypeToken: document.getElementById('response-token'),
-    responseTypeCode: document.getElementById('response-code'),
     scopesGrid: document.getElementById('scopes-grid'),
     selectAllScopesBtn: document.getElementById('select-all-scopes'),
     deselectAllScopesBtn: document.getElementById('deselect-all-scopes'),
@@ -163,22 +160,13 @@ function saveConfig() {
         showStatus('Please select at least one scope.', 'error');
         return;
     }
-
-    // Get selected response type
-    const responseType = elements.responseTypeToken.checked ? 'token' : 'code';
     
     // Update config
     appConfig.clientId = clientId;
     appConfig.scopes = selectedScopes;
-    appConfig.responseType = responseType;
     
     // Save to localStorage
     localStorage.setItem(STORAGE_KEY, JSON.stringify(appConfig));
-    
-    // Update authorize section text based on response type
-    const responseTypeText = responseType === 'token' ? 'access token' : 'authorization code';
-    elements.authorizeSection.querySelector('h2').textContent = `Get Your ${responseTypeText === 'access token' ? 'Access Token' : 'Authorization Code'}`;
-    elements.authorizeSection.querySelector('p').textContent = `Click the button below to start the Spotify OAuth flow. After authorizing, you'll be automatically redirected back here with your ${responseTypeText}.`;
     
     // Show authorization section
     elements.configSection.classList.add('hidden');
@@ -197,13 +185,6 @@ function loadConfig() {
         // Populate form fields
         elements.clientIdInput.value = appConfig.clientId;
         
-        // Set response type radio button
-        if (appConfig.responseType === 'code') {
-            elements.responseTypeCode.checked = true;
-        } else {
-            elements.responseTypeToken.checked = true;
-        }
-        
         // If config exists, show auth section by default
         if (appConfig.clientId && appConfig.scopes.length > 0) {
             elements.configSection.classList.add('hidden');
@@ -218,8 +199,7 @@ function resetConfig() {
     appConfig = {
         clientId: '',
         redirectUri: window.location.href.split('#')[0],
-        scopes: [],
-        responseType: 'token' // Default to token for backward compatibility
+        scopes: []
     };
     
     // Clear form
@@ -242,7 +222,7 @@ function startAuthFlow() {
     
     // Add query parameters
     authUrl.searchParams.append('client_id', appConfig.clientId);
-    authUrl.searchParams.append('response_type', appConfig.responseType);
+    authUrl.searchParams.append('response_type', 'token');
     authUrl.searchParams.append('redirect_uri', appConfig.redirectUri);
     authUrl.searchParams.append('scope', appConfig.scopes.join(' '));
     authUrl.searchParams.append('show_dialog', 'true'); // Force the user to approve the app again
@@ -255,27 +235,21 @@ function startAuthFlow() {
     window.location.href = authUrl.toString();
 }
 
-// Check URL for token or code (after redirect)
+// Check URL for token (after redirect)
 function checkUrlForToken() {
-    // Check for authorization code in URL query parameters
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
-    if (code) {
-        displayAuthCode(code);
-        return;
-    }
-
-    // Check for token in URL hash
     const hash = window.location.hash.substring(1);
     if (hash) {
         const tokenInfo = parseUrlFragment(window.location.href);
         if (tokenInfo && tokenInfo.access_token) {
             displayTokenInfo(tokenInfo);
+            
+            // Clear the hash from the URL to prevent token leakage
+            history.replaceState(null, null, window.location.pathname + window.location.search);
         } else {
             showStatus('Authorization failed or was cancelled.', 'error');
+            elements.authorizeButton.classList.remove('hidden');
+            elements.loadingSection.classList.add('hidden');
         }
-        // Clear the hash from the URL to prevent token leakage
-        history.replaceState(null, null, window.location.pathname + window.location.search);
     }
     
     // Hide loading section if it's visible
@@ -283,20 +257,6 @@ function checkUrlForToken() {
         elements.loadingSection.classList.add('hidden');
         elements.authorizeButton.classList.remove('hidden');
     }
-}
-
-// Display authorization code
-function displayAuthCode(code) {
-    elements.accessTokenElement.textContent = code;
-    elements.tokenTypeElement.textContent = 'Authorization Code';
-    elements.expiresInElement.textContent = 'N/A - One-time use code';
-    elements.scopeElement.textContent = appConfig.scopes.join(' ');
-    
-    elements.authorizeSection.classList.add('hidden');
-    elements.configSection.classList.add('hidden');
-    elements.tokenSection.classList.remove('hidden');
-    
-    showStatus('Authorization code received! Use this code to request an access token from your backend.', 'success');
 }
 
 // Parse URL fragment to extract token and related info
