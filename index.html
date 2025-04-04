@@ -17,6 +17,21 @@
         <div class="config-section" id="config-section">
             <h2>Configuration</h2>
             <div class="form-group">
+                <label>Response Type</label>
+                <div class="response-type-options">
+                    <div class="radio-option">
+                        <input type="radio" id="response-token" name="response-type" value="token" checked>
+                        <label for="response-token">Access Token (Implicit Grant)</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="response-code" name="response-type" value="code">
+                        <label for="response-code">Authorization Code</label>
+                    </div>
+                </div>
+                <small>Choose whether to receive an access token directly or an authorization code</small>
+            </div>
+
+            <div class="form-group">
                 <label for="client-id">Client ID</label>
                 <input type="text" id="client-id" placeholder="Enter your Spotify Client ID">
                 <small>Get this from your <a href="https://developer.spotify.com/dashboard" target="_blank">Spotify Developer Dashboard</a></small>
